@@ -1,0 +1,31 @@
+version: '3'
+services:
+  database:
+    image: postgres
+    container_name: database
+    restart: unless-stopped
+    env_file:
+      - database.env
+    volumes:
+      - database-data:/var/lib/postgresql/data/
+    ports:
+      - 5432:5432
+    networks:
+      - default
+  activos-fijos:
+    build: .
+    container_name: activos-fijos-backend
+    ports:
+      - 8080:8080
+    depends_on:
+      - db
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://database:5432/fixed_assets
+      - SPRING_DATASOURCE_USERNAME=admin
+      - SPRING_DATASOURCE_PASSWORD=P0stgr3SQL
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=none
+      - API_PATH=fixed-assets/api/
+    networks:
+      - default
+volumes:
+  database-data:
