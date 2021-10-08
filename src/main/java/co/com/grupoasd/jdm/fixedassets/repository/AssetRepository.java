@@ -7,6 +7,7 @@ package co.com.grupoasd.jdm.fixedassets.repository;
 import co.com.grupoasd.jdm.fixedassets.entity.Asset;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -14,7 +15,7 @@ import org.springframework.data.repository.query.Param;
  *
  * @author juand
  */
-public interface AssetRepository extends JpaRepository<Asset, Integer> {
+public interface AssetRepository extends JpaRepository<Asset, Integer>, JpaSpecificationExecutor<Asset> {
 
     @Query("SELECT a FROM Asset a "
             + " JOIN a.typeId t "
