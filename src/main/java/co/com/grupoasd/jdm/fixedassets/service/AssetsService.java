@@ -5,15 +5,22 @@
 package co.com.grupoasd.jdm.fixedassets.service;
 
 import co.com.grupoasd.jdm.fixedassets.entity.Asset;
+import co.com.grupoasd.jdm.fixedassets.message.AssetInsert;
 import co.com.grupoasd.jdm.fixedassets.message.AssetResponse;
 import co.com.grupoasd.jdm.fixedassets.message.AssetUpdate;
 import co.com.grupoasd.jdm.fixedassets.repository.AssetRepository;
+import co.com.grupoasd.jdm.fixedassets.specification.CommentSpecs;
+import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.format.datetime.DateFormatter;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -65,15 +72,39 @@ public class AssetsService {
         if (assetUpdate.getInventoryInternalNumber() != null) {
             asset.get().setInventoryInternalNumber(assetUpdate.getInventoryInternalNumber());
         }
-        if (assetUpdate.getLeavingDate() != null) {
-            long diffInMillies = assetUpdate.getLeavingDate().getTime() - asset.get().getPurchaseDate().getTime();
+        validateLeavingDate(assetUpdate.getLeavingDate(), asset.get().getPurchaseDate());
+        asset.get().setLeavingDate(assetUpdate.getLeavingDate());
+        assetRepository.save(asset.get());
+        return modelMapper.map(asset.get(), AssetResponse.class);
+    }
+
+    private void validateLeavingDate(Date leavingDate, Date purchaseDate) {
+        if (leavingDate != null && purchaseDate != null) {
+            long diffInMillies = leavingDate.getTime() - purchaseDate.getTime();
             long diff = TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS);
             if (diff < 0) {
                 throw new IllegalArgumentException("La fecha de baja no puede ser inferior a la de compra!");
             }
-            asset.get().setLeavingDate(assetUpdate.getLeavingDate());
         }
-        assetRepository.save(asset.get());
-        return modelMapper.map(asset.get(), AssetResponse.class);
+    }
+
+    public AssetResponse insert(AssetInsert assetInsert) {
+        validateLeavingDate(assetInsert.getLeavingDate(), assetInsert.getPurchaseDate());
+        Asset asset = assetRepository.save(modelMapper.map(assetInsert, Asset.class));
+        return modelMapper.map(asset, AssetResponse.class);
+    }
+
+    public List<AssetResponse> search(Optional<String> tipo, Optional<String> fechaCompra, Optional<String> serial) throws ParseException {
+
+        Specification spec1 = CommentSpecs.assetTypeNameEquals(tipo);
+        Optional<Date> fechaCompraQuery = fechaCompra.isPresent()
+                ? Optional.of(new DateFormatter("yyyyMMdd").parse(fechaCompra.get(), Locale.forLanguageTag("co")))
+                : Optional.ofNullable(null);
+        Specification spec2 = CommentSpecs.purchaseDateEquals(fechaCompraQuery);
+        Specification spec3 = CommentSpecs.serialEquals(serial);
+
+        Specification spec = Specification.where(spec1).and(spec2).and(spec3);
+
+        return mapResults(assetRepository.findAll(spec));
     }
 }

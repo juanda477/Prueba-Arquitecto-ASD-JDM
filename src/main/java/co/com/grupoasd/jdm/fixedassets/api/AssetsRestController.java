@@ -4,12 +4,17 @@
  */
 package co.com.grupoasd.jdm.fixedassets.api;
 
+import co.com.grupoasd.jdm.fixedassets.message.AssetInsert;
 import co.com.grupoasd.jdm.fixedassets.message.AssetResponse;
 import co.com.grupoasd.jdm.fixedassets.message.AssetUpdate;
 import co.com.grupoasd.jdm.fixedassets.service.AssetsService;
+import java.text.ParseException;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestMapping;
 import java.util.List;
+import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -53,6 +58,24 @@ public class AssetsRestController {
         }
     }
 
+    @GetMapping("/search")
+    public ResponseEntity<List<AssetResponse>> search(
+            @RequestParam("tipo") Optional<String> tipo,
+            @RequestParam("fechaCompra") Optional<String> fechaCompra,
+            @RequestParam("serial") Optional<String> serial) {
+        List<AssetResponse> response;
+        try {
+            response = assetsService.search(tipo, fechaCompra, serial);
+        } catch (ParseException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Fecha de compra sin el formato yyyyMMdd");
+        }
+        if (response != null) {
+            return ResponseEntity.ok(response);
+        } else {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<AssetResponse> put(@PathVariable Integer id, @RequestBody AssetUpdate input) {
         AssetResponse response = assetsService.getById(id);
@@ -68,8 +91,15 @@ public class AssetsRestController {
     }
 
     @PostMapping
-    public ResponseEntity<?> post(@RequestBody Object input) {
-        return null;
+    public ResponseEntity<AssetResponse> post(@RequestBody AssetInsert input) {
+        if (input == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Método de insertar sin información!");
+        }
+        try {
+            return ResponseEntity.ok(assetsService.insert(input));
+        } catch (IllegalArgumentException ex) {
+            throw new ResponseStatusException(HttpStatus.EXPECTATION_FAILED, ex.getLocalizedMessage());
+        }
     }
 
     @DeleteMapping("/{id}")
