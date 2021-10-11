@@ -76,7 +76,7 @@ public class AssetsRestController {
         }
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/update/{id}")
     public ResponseEntity<AssetResponse> put(@PathVariable Integer id, @RequestBody AssetUpdate input) {
         AssetResponse response = assetsService.getById(id);
         if (response != null) {
@@ -90,8 +90,8 @@ public class AssetsRestController {
         }
     }
 
-    @PostMapping
-    public ResponseEntity<AssetResponse> post(@RequestBody AssetInsert input) {
+    @PutMapping("/")
+    public ResponseEntity<AssetResponse> insert(@RequestBody AssetInsert input) {
         if (input == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Método de insertar sin información!");
         }
