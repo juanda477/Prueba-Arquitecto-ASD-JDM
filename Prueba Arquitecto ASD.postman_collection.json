@@ -79,9 +79,32 @@
 		{
 			"name": "Actualizar serial interno y/o fecha de baja",
 			"request": {
-				"method": "GET",
+				"method": "PUT",
 				"header": [],
-				"url": null
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"inventoryInternalNumber\" : 2129,\r\n    \"leavingDate\":\"2021-10-05\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/fixed-assets/api/assets/update/2",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"fixed-assets",
+						"api",
+						"assets",
+						"update",
+						"2"
+					]
+				}
 			},
 			"response": []
 		}
